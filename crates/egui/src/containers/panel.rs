@@ -342,24 +342,24 @@ impl SidePanel {
 
         PanelState { rect }.store(ui.ctx(), id);
 
-        {
-            let stroke = if is_resizing {
-                ui.style().visuals.widgets.active.fg_stroke // highly visible
-            } else if resize_hover {
-                ui.style().visuals.widgets.hovered.fg_stroke // highly visible
-            } else if show_separator_line {
-                // TODO(emilk): distinguish resizable from non-resizable
-                ui.style().visuals.widgets.noninteractive.bg_stroke // dim
-            } else {
-                Stroke::NONE
-            };
-            // TODO(emilk): draw line on top of all panels in this ui when https://github.com/emilk/egui/issues/1516 is done
-            let resize_x = side.opposite().side_x(rect);
-
-            // Make sure the line is on the inside of the panel:
-            let resize_x = resize_x + 0.5 * side.sign() * stroke.width;
-            ui.painter().vline(resize_x, panel_rect.y_range(), stroke);
-        }
+        // {
+        //     let stroke = if is_resizing {
+        //         ui.style().visuals.widgets.active.fg_stroke // highly visible
+        //     } else if resize_hover {
+        //         ui.style().visuals.widgets.hovered.fg_stroke // highly visible
+        //     } else if show_separator_line {
+        //         // TODO(emilk): distinguish resizable from non-resizable
+        //         ui.style().visuals.widgets.noninteractive.bg_stroke // dim
+        //     } else {
+        //         Stroke::NONE
+        //     };
+        //     // TODO(emilk): draw line on top of all panels in this ui when https://github.com/emilk/egui/issues/1516 is done
+        //     let resize_x = side.opposite().side_x(rect);
+        //
+        //     // Make sure the line is on the inside of the panel:
+        //     let resize_x = resize_x + 0.5 * side.sign() * stroke.width;
+        //     ui.painter().vline(resize_x, panel_rect.y_range(), stroke);
+        // }
 
         inner_response
     }

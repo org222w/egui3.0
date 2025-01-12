@@ -687,6 +687,7 @@ struct FormatSummary {
     any_background: bool,
     any_underline: bool,
     any_strikethrough: bool,
+    any_wave_underline: bool,
 }
 
 fn format_summary(job: &LayoutJob) -> FormatSummary {
@@ -695,6 +696,7 @@ fn format_summary(job: &LayoutJob) -> FormatSummary {
         format_summary.any_background |= section.format.background != Color32::TRANSPARENT;
         format_summary.any_underline |= section.format.underline != Stroke::NONE;
         format_summary.any_strikethrough |= section.format.strikethrough != Stroke::NONE;
+        format_summary.any_wave_underline |= section.format.wave_underline != Stroke::NONE;
     }
     format_summary
 }
@@ -737,6 +739,15 @@ fn tessellate_row(
             let format = &job.sections[glyph.section_index as usize].format;
             let stroke = format.strikethrough;
             let y = glyph.logical_rect().center().y;
+            (stroke, y)
+        });
+    }
+
+    if format_summary.any_wave_underline {
+        add_row_waveline(point_scale, row, &mut mesh, |glyph| {
+            let format = &job.sections[glyph.section_index as usize].format;
+            let stroke = format.wave_underline;
+            let y = glyph.logical_rect().bottom();
             (stroke, y)
         });
     }
@@ -909,6 +920,85 @@ fn add_hline(point_scale: PointScale, [start, stop]: [Pos2; 2], stroke: Stroke, 
 
         mesh.add_colored_rect(rect, stroke.color);
     }
+}
+
+fn add_row_waveline(
+    point_scale: PointScale,
+    row: &Row,
+    mesh: &mut Mesh,
+    stroke_and_y: impl Fn(&Glyph) -> (Stroke, f32),
+) {
+    let mut end_wave = |start: Option<(Stroke, Pos2)>, stop_x: f32| {
+        if let Some((stroke, start)) = start {
+            add_wave(point_scale, [start, pos2(stop_x, start.y)], stroke, mesh);
+        }
+    };
+
+    let mut line_start = None;
+    let mut last_right_x = f32::NAN;
+
+    for glyph in &row.glyphs {
+        let (stroke, y) = stroke_and_y(glyph);
+
+        if stroke == Stroke::NONE {
+            end_wave(line_start.take(), last_right_x);
+        } else if let Some((existing_stroke, start)) = line_start {
+            if existing_stroke == stroke && start.y == y {
+                // continue the same line
+            } else {
+                end_wave(line_start.take(), last_right_x);
+                line_start = Some((stroke, pos2(glyph.pos.x, y)));
+            }
+        } else {
+            line_start = Some((stroke, pos2(glyph.pos.x, y)));
+        }
+
+        last_right_x = glyph.max_x();
+    }
+
+    end_wave(line_start.take(), last_right_x);
+}
+
+fn add_wave(point_scale: PointScale, [start, stop]: [Pos2; 2], stroke: Stroke, mesh: &mut Mesh) {
+    let wave_length = 6.0; // 波浪的长度
+    let wave_height = 2.0; // 波浪的高度
+    let dx = stop.x - start.x;
+
+    // 如果线段太短,就直接画直线
+    if dx < wave_length {
+        let mut path = crate::tessellator::Path::default();
+        path.add_line_segment([start, stop]);
+        let feathering = 1.0 / point_scale.pixels_per_point();
+        path.stroke_open(feathering, &PathStroke::from(stroke), mesh);
+        return;
+    }
+
+    // 计算需要多少个完整的波浪
+    let num_waves = (dx / wave_length).floor() as usize;
+
+    // 构建波浪路径的点
+    let mut points = Vec::with_capacity(num_waves * 4 + 1);
+    points.push(start);
+
+    for i in 0..num_waves {
+        let x = start.x + i as f32 * wave_length;
+        let quarter_wave = wave_length / 4.0;
+
+        // 每个波浪由4个点构成
+        points.push(pos2(x + quarter_wave, start.y + wave_height));
+        points.push(pos2(x + 2.0 * quarter_wave, start.y));
+        points.push(pos2(x + 3.0 * quarter_wave, start.y - wave_height));
+        points.push(pos2(x + 4.0 * quarter_wave, start.y));
+    }
+
+    // 添加最后一个点
+    points.push(stop);
+
+    // 创建路径并渲染
+    let mut path = crate::tessellator::Path::default();
+    path.add_open_points(&points);
+    let feathering = 1.0 / point_scale.pixels_per_point();
+    path.stroke_open(feathering, &PathStroke::from(stroke), mesh);
 }
 
 // ----------------------------------------------------------------------------

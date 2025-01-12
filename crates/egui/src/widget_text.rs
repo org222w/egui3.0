@@ -1,7 +1,7 @@
 use std::{borrow::Cow, sync::Arc};
 
 use emath::GuiRounding as _;
-
+use epaint::Stroke;
 use crate::{
     text::{LayoutJob, TextWrapping},
     Align, Color32, FontFamily, FontSelection, Galley, Style, TextStyle, TextWrapMode, Ui, Visuals,
@@ -429,6 +429,7 @@ impl RichText {
                 underline,
                 strikethrough,
                 valign,
+                wave_underline:Stroke::NONE,
             },
         )
     }

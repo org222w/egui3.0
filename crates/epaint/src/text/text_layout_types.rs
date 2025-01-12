@@ -278,6 +278,8 @@ pub struct TextFormat {
 
     pub strikethrough: Stroke,
 
+    pub wave_underline: Stroke,
+
     /// If you use a small font and [`Align::TOP`] you
     /// can get the effect of raised text.
     ///
@@ -302,6 +304,7 @@ impl Default for TextFormat {
             italics: false,
             underline: Stroke::NONE,
             strikethrough: Stroke::NONE,
+            wave_underline: Stroke::NONE,
             valign: Align::BOTTOM,
         }
     }
@@ -320,6 +323,7 @@ impl std::hash::Hash for TextFormat {
             underline,
             strikethrough,
             valign,
+            wave_underline,
         } = self;
         font_id.hash(state);
         emath::OrderedFloat(*extra_letter_spacing).hash(state);
@@ -332,6 +336,7 @@ impl std::hash::Hash for TextFormat {
         underline.hash(state);
         strikethrough.hash(state);
         valign.hash(state);
+        wave_underline.hash(state);
     }
 }
 

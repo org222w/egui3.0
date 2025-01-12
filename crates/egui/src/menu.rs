@@ -658,7 +658,7 @@ impl MenuState {
         self.response = MenuResponse::Close;
     }
 
-    fn show_submenu<R>(
+    pub fn show_submenu<R>(
         &mut self,
         ctx: &Context,
         parent_layer: LayerId,
@@ -682,13 +682,13 @@ impl MenuState {
                 .map_or(false, |(_, sub)| sub.read().area_contains(pos))
     }
 
-    fn next_entry_index(&mut self) -> usize {
+    pub fn next_entry_index(&mut self) -> usize {
         self.entry_count += 1;
         self.entry_count - 1
     }
 
     /// Sense button interaction opening and closing submenu.
-    fn submenu_button_interaction(&mut self, ui: &Ui, sub_id: Id, button: &Response) {
+    pub fn submenu_button_interaction(&mut self, ui: &Ui, sub_id: Id, button: &Response) {
         let pointer = ui.input(|i| i.pointer.clone());
         let open = self.is_open(sub_id);
         if self.moving_towards_current_submenu(&pointer) {
@@ -713,7 +713,7 @@ impl MenuState {
     }
 
     /// Check if pointer is moving towards current submenu.
-    fn moving_towards_current_submenu(&self, pointer: &PointerState) -> bool {
+    pub fn moving_towards_current_submenu(&self, pointer: &PointerState) -> bool {
         if pointer.is_still() {
             return false;
         }
@@ -728,7 +728,7 @@ impl MenuState {
     }
 
     /// Check if pointer is hovering current submenu.
-    fn hovering_current_submenu(&self, pointer: &PointerState) -> bool {
+    pub fn hovering_current_submenu(&self, pointer: &PointerState) -> bool {
         if let Some(sub_menu) = self.current_submenu() {
             if let Some(pos) = pointer.hover_pos() {
                 return sub_menu.read().area_contains(pos);
@@ -738,38 +738,38 @@ impl MenuState {
     }
 
     /// Cascade close response to menu root.
-    fn cascade_close_response(&mut self, response: MenuResponse) {
+    pub fn cascade_close_response(&mut self, response: MenuResponse) {
         if response.is_close() {
             self.response = response;
         }
     }
 
-    fn is_open(&self, id: Id) -> bool {
+    pub fn is_open(&self, id: Id) -> bool {
         self.sub_id() == Some(id)
     }
 
-    fn sub_id(&self) -> Option<Id> {
+    pub fn sub_id(&self) -> Option<Id> {
         self.sub_menu.as_ref().map(|(id, _)| *id)
     }
 
-    fn current_submenu(&self) -> Option<&Arc<RwLock<Self>>> {
+    pub fn current_submenu(&self) -> Option<&Arc<RwLock<Self>>> {
         self.sub_menu.as_ref().map(|(_, sub)| sub)
     }
 
-    fn submenu(&self, id: Id) -> Option<&Arc<RwLock<Self>>> {
+    pub fn submenu(&self, id: Id) -> Option<&Arc<RwLock<Self>>> {
         self.sub_menu
             .as_ref()
             .and_then(|(k, sub)| if id == *k { Some(sub) } else { None })
     }
 
     /// Open submenu at position, if not already open.
-    fn open_submenu(&mut self, id: Id, pos: Pos2) {
+    pub fn open_submenu(&mut self, id: Id, pos: Pos2) {
         if !self.is_open(id) {
             self.sub_menu = Some((id, Arc::new(RwLock::new(Self::new(pos)))));
         }
     }
 
-    fn close_submenu(&mut self) {
+    pub fn close_submenu(&mut self) {
         self.sub_menu = None;
     }
 }

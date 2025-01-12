@@ -2903,6 +2903,10 @@ impl Ui {
         self.menu_state = None;
     }
 
+    pub fn clone_menu_state(&self) -> Option<Arc<RwLock<MenuState>>> {
+        self.menu_state.clone()
+    }
+
     pub(crate) fn set_menu_state(&mut self, menu_state: Option<Arc<RwLock<MenuState>>>) {
         self.menu_state = menu_state;
     }
